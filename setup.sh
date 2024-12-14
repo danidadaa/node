@@ -48,7 +48,7 @@ read -p "Account ID: " IDENTIFIER
 read -p "Set your PIN: " PIN
 
 echo "Binding account with ID: $IDENTIFIER and PIN: $PIN..."
-./multiple-cli bind --bandwidth-download 100 --identifier $IDENTIFIER --pin $PIN --storage 200 --bandwidth-upload 100
+./multiple-cli bind --bandwidth-download 5000 --identifier $IDENTIFIER --pin $PIN --storage 2000000 --bandwidth-upload 5000
 
 if [ $? -eq 0 ]; then
     echo "Binding successful! Setup complete."
