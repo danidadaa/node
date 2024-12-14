@@ -1,67 +1,54 @@
 #!/bin/bash
 
-# Setup Script for Multiple Node
+# Menampilkan header
+echo "======================================"
+echo "   Multiple Network Node Installer"
+echo "         By Share It Hub"
+echo "======================================"
+sleep 2
 
-# Step 1: Check for prerequisites
-if [ -z "$1" ] || [ -z "$2" ]; then
-    echo "Usage: ./setup.sh <UNIQUE_IDENTIFIER> <PIN_CODE>"
-    exit 1
-fi
+echo "Starting system update..."
+sudo apt update && sudo apt upgrade -y
 
-UNIQUE_IDENTIFIER=$1
-PIN_CODE=$2
-
-# Step 2: Check Linux version and architecture
+echo "Checking system architecture..."
 ARCH=$(uname -m)
-echo "Detected architecture: $ARCH"
-
-# Step 3: Download the appropriate client
-if [ "$ARCH" == "x86_64" ]; then
-    echo "Downloading client for x64 architecture..."
-    wget https://cdn.app.multiple.cc/client/linux/x64/multipleforlinux.tar
-elif [ "$ARCH" == "aarch64" ]; then
-    echo "Downloading client for ARM64 architecture..."
-    wget https://cdn.app.multiple.cc/client/linux/arm64/multipleforlinux.tar
+if [[ "$ARCH" == "x86_64" ]]; then
+    CLIENT_URL="https://cdn.app.multiple.cc/client/linux/x64/multipleforlinux.tar"
+elif [[ "$ARCH" == "aarch64" ]]; then
+    CLIENT_URL="https://cdn.app.multiple.cc/client/linux/arm64/multipleforlinux.tar"
 else
-    echo "Unsupported architecture: $ARCH"
+    echo "Unsupported system architecture: $ARCH"
     exit 1
 fi
 
-# Step 4: Extract the installation package
-echo "Extracting the installation package..."
+echo "Downloading the client from $CLIENT_URL..."
+wget $CLIENT_URL -O multipleforlinux.tar
+
+echo "Extracting files..."
 tar -xvf multipleforlinux.tar
 
-# Step 5: Grant permissions
-echo "Granting execute permissions..."
+cd multipleforlinux
+
+echo "Granting permissions..."
 chmod +x ./multiple-cli
 chmod +x ./multiple-node
 
-# Step 6: Configure environment variables
-EXTRACTED_DIR=$(pwd)
-PATH=$PATH:$EXTRACTED_DIR
-export PATH
-source /etc/profile
+echo "Adding directory to system PATH..."
+echo "PATH=\$PATH:$(pwd)" >> ~/.bash_profile
+source ~/.bash_profile
 
-echo "Environment variables configured."
+echo "Setting permissions..."
+chmod -R 777 $(pwd)
 
-# Step 7: Grant permissions for the directory
-echo "Granting permissions to the extracted directory..."
-chmod -R 777 $EXTRACTED_DIR
-
-# Step 8: Start the program
-echo "Starting the multiple-node program..."
+echo "Launching multiple-node..."
 nohup ./multiple-node > output.log 2>&1 &
 
-echo "Program started. Logs are being written to output.log."
+echo "Please enter your Account ID and PIN to bind your account:"
+read -p "Account ID: " IDENTIFIER
+read -p "Set your PIN: " PIN
 
-# Step 9: Bind the unique account identifier
-echo "Binding the unique account identifier..."
-./multiple-cli bind \
-    --bandwidth-download 10000 \
-    --identifier $UNIQUE_IDENTIFIER \
-    --pin $PIN_CODE \
-    --storage 20000000 \
-    --bandwidth-upload 10000
+echo "Binding account with ID: $IDENTIFIER and PIN: $PIN..."
+./multiple-cli bind --bandwidth-download 100 --identifier $IDENTIFIER --pin $PIN --storage 200 --bandwidth-upload 100
 
 if [ $? -eq 0 ]; then
     echo "Binding successful! Setup complete."
